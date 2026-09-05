@@ -1,0 +1,119 @@
+import React, { useState } from 'react';
+import { Package, Search, Filter, ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
+import { InspectionRecord } from '../../types';
+
+interface ProductsPageProps {
+  inspections: InspectionRecord[];
+  onViewProductInspection: (id: string) => void;
+}
+
+export function ProductsPage({ inspections, onViewProductInspection }: ProductsPageProps) {
+  const [search, setSearch] = useState('');
+
+  const filteredInspections = inspections.filter((ins) => {
+    const q = search.toLowerCase();
+    const ctx = ins.product_context;
+    return (
+      ctx.product_name?.toLowerCase().includes(q) ||
+      ctx.brand?.toLowerCase().includes(q) ||
+      ctx.manufacturer?.toLowerCase().includes(q) ||
+      ctx.category?.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div id="products-page" className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-950 tracking-tight">
+            Packaged Commodity Registry
+          </h1>
+          <p className="text-sm text-slate-500">
+            Catalog of inspected commercial commodities, pack variants, and brand histories.
+          </p>
+        </div>
+
+        <div className="relative w-full sm:w-72">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products, brands or manufacturers..."
+            className="w-full bg-white border border-slate-200 text-slate-900 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {filteredInspections.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 space-y-2">
+          <Package className="w-8 h-8 text-slate-400 mx-auto" />
+          <p className="text-sm font-semibold">No commodities matched "{search}"</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredInspections.map((ins) => {
+            const status = ins.compliance_summary?.overall_status || 'COMPLIANT';
+            const isPass = status === 'COMPLIANT';
+            const isFail = status === 'NON-COMPLIANT';
+
+            return (
+              <div
+                key={ins.id}
+                onClick={() => onViewProductInspection(ins.id)}
+                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                    {ins.product_context.category || 'Commodity'}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      isPass
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : isFail
+                        ? 'bg-rose-50 text-rose-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {isPass ? 'Compliant' : isFail ? 'Non-Compliant' : 'Review'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {ins.images[0]?.data_url ? (
+                      <img
+                        src={ins.images[0].data_url}
+                        alt={ins.product_context.product_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {ins.product_context.product_name}
+                    </h3>
+                    <div className="text-xs font-semibold text-blue-600">{ins.product_context.brand}</div>
+                    <div className="text-[11px] text-slate-500">
+                      Declared: {ins.product_context.net_quantity} {ins.product_context.net_quantity_unit} • ₹{' '}
+                      {ins.product_context.mrp.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                  <span className="truncate max-w-[180px]">{ins.product_context.manufacturer}</span>
+                  <span className="font-semibold text-blue-600">View Inspection →</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

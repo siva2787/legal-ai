@@ -1,0 +1,6 @@
+{
+  "name": "LegalMet AI",
+  "description": "Legal Metrology packaged-commodities inspection platform for inspectors with deterministic compliance rule engine and evidence traceability.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
