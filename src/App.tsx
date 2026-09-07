@@ -272,7 +272,7 @@ export default function App() {
         />
 
         {/* Dynamic Route View */}
-        <main className="flex-1 pb-16">
+        <main className="flex-1">
           {currentView === 'dashboard' && (
             <DashboardPage
               user={currentUser}

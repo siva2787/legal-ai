@@ -148,7 +148,7 @@ export function DashboardPage({
   const todayDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   return (
-    <div id="dashboard-page" className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div id="dashboard-page" className="p-6 pb-2 space-y-6 max-w-7xl mx-auto">
       {/* Top Welcome Banner */}
       <div className="rounded-2xl border border-blue-200/80 relative overflow-hidden shadow-xs">
         <img
@@ -353,7 +353,7 @@ export function DashboardPage({
                       </td>
                     </tr>
                   ) : (
-                    inspections.slice(0, 5).map((ins) => {
+                    inspections.slice(0, 6).map((ins) => {
                       const status = ins.compliance_summary?.overall_status || 'COMPLIANT';
                       const isPass = status === 'COMPLIANT';
                       const isFail = status === 'NON-COMPLIANT';
@@ -530,8 +530,8 @@ export function DashboardPage({
                             setPeriodMenuOpen(false);
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs font-semibold cursor-pointer ${opt.value === compliancePeriod
-                              ? 'text-blue-600 bg-blue-50'
-                              : 'text-slate-600 hover:bg-slate-50'
+                            ? 'text-blue-600 bg-blue-50'
+                            : 'text-slate-600 hover:bg-slate-50'
                             }`}
                         >
                           {opt.label}
@@ -628,8 +628,8 @@ export function DashboardPage({
                             setCatalogMenuOpen(false);
                           }}
                           className={`w-full text-left px-3 py-1.5 text-xs font-semibold cursor-pointer ${opt.value === catalogFilter
-                              ? 'text-blue-600 bg-blue-50'
-                              : 'text-slate-600 hover:bg-slate-50'
+                            ? 'text-blue-600 bg-blue-50'
+                            : 'text-slate-600 hover:bg-slate-50'
                             }`}
                         >
                           {opt.label}

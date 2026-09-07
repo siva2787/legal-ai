@@ -357,7 +357,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
                 setLoadingSample(false);
               }
             }}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/20 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3.5 h-3.5" />
             {loadingSample ? 'Loading Sample...' : 'Reset to Sample Package'}
@@ -366,8 +366,8 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 flex flex-col h-full">
           <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
             Inspection Metadata
           </h2>
@@ -457,19 +457,19 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
             id="proceed-to-ai-analysis-btn"
             onClick={handleProceed}
             disabled={images.length === 0}
-            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 text-sm mt-4"
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 text-sm mt-auto"
           >
             <Sparkles className="w-4 h-4" />
             <span>Analyze with AI Engine</span>
           </button>
         </div>
 
-        <div className="lg:col-span-7 space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-            <h2 className="text-base font-bold text-slate-900 mb-1">
+        <div className="lg:col-span-7 space-y-4 flex flex-col h-full">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex-1 flex flex-col">
+            <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 mb-1">
               Package Images ({images.length}/3 views uploaded)
             </h2>
-            <p className="text-xs text-slate-500 mb-5">
+            <p className="text-xs text-slate-500 mb-5 mt-2">
               Ensure high clarity for accurate optical recognition and measurement compliance checks.
             </p>
 
@@ -522,7 +522,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
                         </div>
                       </div>
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-3">
+                      <div className="w-full h-full flex flex-col items-center justify-between p-3">
                         <button
                           type="button"
                           onClick={() => setCameraSlot(view)}
@@ -535,7 +535,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
                           </div>
                           <div className="text-[10px] text-blue-500 mt-1">Tap to capture or drop image</div>
                         </button>
-                        <label className="text-[10px] text-slate-400 underline mt-2 cursor-pointer hover:text-slate-600">
+                        <label className="text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-full px-3 py-1 mt-4 cursor-pointer transition-colors">
                           or choose from device
                           <input
                             type="file"
@@ -563,7 +563,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
                 setDragOverSlot((prev) => (prev === 'general' ? null : prev));
               }}
               onDrop={handleGeneralDrop}
-              className={`mt-6 border-2 border-dashed rounded-xl p-6 text-center transition-colors ${dragOverSlot === 'general' ? 'border-blue-400 bg-blue-50' : 'border-slate-200 bg-slate-50/60'
+              className={`mt-6 border-2 border-dashed rounded-xl p-6 text-center transition-colors flex-1 flex flex-col items-center justify-center ${dragOverSlot === 'general' ? 'border-blue-400 bg-blue-50' : 'border-slate-200 bg-slate-50/60'
                 }`}
             >
               <UploadCloud className="w-10 h-10 text-blue-500 mx-auto mb-2" />
@@ -573,7 +573,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
               <div className="text-xs text-slate-500 mt-1">
                 Supports JPG, PNG, WEBP high-resolution package label scans
               </div>
-              <label className="mt-3 inline-block px-4 py-2 bg-white border border-slate-200 text-xs font-bold text-slate-700 rounded-lg shadow-2xs hover:bg-slate-50 cursor-pointer">
+              <label className="mt-3 inline-block px-5 py-2.5 bg-blue-600 border border-blue-600 text-xs font-bold text-white rounded-lg shadow-md shadow-blue-500/25 hover:bg-blue-700 cursor-pointer transition-colors">
                 Browse Files
                 <input
                   type="file"

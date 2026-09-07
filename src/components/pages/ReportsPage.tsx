@@ -41,51 +41,50 @@ export function ReportsPage({ inspections, onOpenReport }: ReportsPageProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <table className="w-full text-left border-collapse text-xs">
+      <div className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden">
+        <table className="w-full text-left border-separate border-spacing-0 text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-500 uppercase tracking-wider">
-              <th className="py-3.5 px-4">Report Dossier ID</th>
-              <th className="py-3.5 px-4">Commodity / Manufacturer</th>
-              <th className="py-3.5 px-4">Inspection Date</th>
-              <th className="py-3.5 px-4">Enforcement Verdict</th>
-              <th className="py-3.5 px-4 text-right">Actions</th>
+            <tr className="bg-slate-100 font-bold text-slate-600 uppercase tracking-wider">
+              <th className="py-3.5 px-4 border-r border-b border-slate-300">Report Dossier ID</th>
+              <th className="py-3.5 px-4 border-r border-b border-slate-300">Commodity / Manufacturer</th>
+              <th className="py-3.5 px-4 border-r border-b border-slate-300">Inspection Date</th>
+              <th className="py-3.5 px-4 border-r border-b border-slate-300">Enforcement Verdict</th>
+              <th className="py-3.5 px-4 text-right border-b border-slate-300">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map((ins) => {
+          <tbody>
+            {filtered.map((ins, idx) => {
               const status = ins.compliance_summary?.overall_status || 'COMPLIANT';
               const isPass = status === 'COMPLIANT';
 
               return (
-                <tr key={ins.id} className="hover:bg-slate-50/60">
-                  <td className="py-4 px-4 font-mono font-bold text-blue-700">
+                <tr key={ins.id} className={idx % 2 === 1 ? 'bg-slate-50/50 hover:bg-slate-100/60' : 'hover:bg-slate-100/60'}>
+                  <td className="py-4 px-4 font-mono font-bold text-blue-800 border-r border-b border-slate-200">
                     REP-{ins.inspection_number.replace('INS-', '')}
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 border-r border-b border-slate-200">
                     <div className="font-bold text-slate-900">{ins.product_context.product_name}</div>
                     <div className="text-[11px] text-slate-500">{ins.product_context.manufacturer}</div>
                   </td>
-                  <td className="py-4 px-4 text-slate-600">
+                  <td className="py-4 px-4 text-slate-600 whitespace-nowrap border-r border-b border-slate-200">
                     {new Date(ins.created_at).toLocaleDateString('en-GB', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric'
                     })}
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 border-r border-b border-slate-200">
                     <span
-                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] ${
-                        isPass ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                      }`}
+                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] whitespace-nowrap ${isPass ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                        }`}
                     >
                       {status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-right">
+                  <td className="py-4 px-4 text-right border-b border-slate-200">
                     <button
                       onClick={() => onOpenReport(ins.id)}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs"
+                      className="px-3 py-1.5 bg-blue-800 hover:bg-blue-900 text-white font-bold rounded text-xs transition-all shadow-xs"
                     >
                       View Report
                     </button>

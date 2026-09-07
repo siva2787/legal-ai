@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   User,
   ShieldCheck,
@@ -10,7 +10,9 @@ import {
   Bell,
   Save,
   CheckCircle2,
-  Cpu
+  Cpu,
+  Camera,
+  Trash2
 } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { AshokaEmblem } from '../common/BrandAssets';
@@ -20,6 +22,9 @@ interface ProfileSettingsPageProps {
   onUpdateProfile: (updated: Partial<UserProfile>) => void;
 }
 
+const AVATAR_STORAGE_PREFIX = 'legalmet_avatar_';
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024; // 3MB
+
 export function ProfileSettingsPage({ user, onUpdateProfile }: ProfileSettingsPageProps) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
@@ -27,6 +32,111 @@ export function ProfileSettingsPage({ user, onUpdateProfile }: ProfileSettingsPa
   const [zone, setZone] = useState(user.zone || 'Kumbakonam / Thanjavur District, Tamil Nadu');
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const avatarStorageKey = `${AVATAR_STORAGE_PREFIX}${user.employee_id || 'default'}`;
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    user.avatar_url || localStorage.getItem(avatarStorageKey)
+  );
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        setShowAvatarMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCameraClick = () => {
+    if (avatarUrl) {
+      setShowAvatarMenu((v) => !v);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleUpdateChoice = () => {
+    setShowAvatarMenu(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleDeleteChoice = () => {
+    setShowAvatarMenu(false);
+    handleRemoveAvatar();
+  };
+
+  const persistAvatar = async (dataUrl: string | null) => {
+    const token = localStorage.getItem('legalmet_token');
+    try {
+      const res = await fetch('/api/auth/profile/avatar', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ employee_id: user.employee_id, avatar: dataUrl })
+      });
+      const data = await res.json();
+      if (data && data.success && data.avatarUrl !== undefined) {
+        return data.avatarUrl as string | null;
+      }
+    } catch (err) {
+      console.warn('Avatar save offline fallback:', err);
+    }
+    return dataUrl;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setAvatarError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select an image file.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError('Image must be under 3MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      const finalUrl = await persistAvatar(dataUrl);
+      setAvatarUrl(finalUrl);
+      if (finalUrl) {
+        localStorage.setItem(avatarStorageKey, finalUrl);
+      } else {
+        localStorage.removeItem(avatarStorageKey);
+      }
+      onUpdateProfile({ avatar_url: finalUrl } as Partial<UserProfile>);
+      setIsUploadingAvatar(false);
+    };
+    reader.onerror = () => {
+      setAvatarError('Could not read that image. Try another file.');
+      setIsUploadingAvatar(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setIsUploadingAvatar(true);
+    await persistAvatar(null);
+    localStorage.removeItem(avatarStorageKey);
+    setAvatarUrl(null);
+    onUpdateProfile({ avatar_url: null } as Partial<UserProfile>);
+    setIsUploadingAvatar(false);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,9 +182,63 @@ export function ProfileSettingsPage({ user, onUpdateProfile }: ProfileSettingsPa
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Inspector Credential Card (4 cols) */}
         <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs text-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-700 font-black text-2xl flex items-center justify-center mx-auto border-2 border-blue-200">
-            {name.split(' ').map((n) => n[0]).join('')}
+          <div className="relative w-20 h-20 mx-auto group" ref={avatarMenuRef}>
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-200 flex items-center justify-center bg-blue-100 text-blue-700 font-black text-2xl">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{name.split(' ').map((n) => n[0]).join('')}</span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCameraClick}
+              disabled={isUploadingAvatar}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center border-2 border-white shadow-md disabled:opacity-60"
+              title="Change profile picture"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
+
+            {showAvatarMenu && (
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-40 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-50 text-xs">
+                <button
+                  type="button"
+                  onClick={handleUpdateChoice}
+                  className="w-full px-3 py-2 text-left text-slate-700 hover:bg-slate-50 font-semibold flex items-center gap-2"
+                >
+                  <Camera className="w-3.5 h-3.5 text-slate-400" />
+                  Update Profile
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteChoice}
+                    className="w-full px-3 py-2 text-left text-rose-600 hover:bg-rose-50 font-semibold flex items-center gap-2"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Profile
+                  </button>
+                )}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
+
+          {isUploadingAvatar && (
+            <div className="text-[11px] text-slate-400 font-medium">Updating photo...</div>
+          )}
+          {avatarError && (
+            <div className="text-[11px] text-rose-600 font-semibold">{avatarError}</div>
+          )}
 
           <div>
             <h2 className="text-lg font-black text-slate-900">{name}</h2>
@@ -92,9 +256,19 @@ export function ProfileSettingsPage({ user, onUpdateProfile }: ProfileSettingsPa
               <Building className="w-3.5 h-3.5 text-slate-400" />
               <span>Ministry of Consumer Affairs</span>
             </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              <span className="truncate">{zone}</span>
+            <div className="flex items-start gap-2">
+              <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+              <span className="break-words">
+                {zone.includes(',') ? (
+                  <>
+                    {zone.slice(0, zone.lastIndexOf(',')).trim()}
+                    <br />
+                    {zone.slice(zone.lastIndexOf(',') + 1).trim()}
+                  </>
+                ) : (
+                  zone
+                )}
+              </span>
             </div>
           </div>
         </div>
@@ -196,7 +370,7 @@ export function ProfileSettingsPage({ user, onUpdateProfile }: ProfileSettingsPa
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div className="text-slate-400 text-[10px] uppercase font-bold">Multimodal AI</div>
-                <div className="font-bold text-slate-900 mt-0.5">Gemini 3.8 Flash</div>
+                <div className="font-bold text-slate-900 mt-0.5">Google Gemini API</div>
                 <div className="text-[10px] text-purple-600 font-semibold">Server-Side Verified</div>
               </div>
             </div>

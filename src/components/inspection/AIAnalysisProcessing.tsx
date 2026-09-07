@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Sparkles, CheckCircle2, Clock, ShieldCheck, Cpu, AlertTriangle, RotateCcw, ArrowLeft } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Sparkles, CheckCircle2, Clock, ShieldCheck, Cpu, AlertTriangle, RotateCcw, ArrowLeft, FileSearch, FileText, Scale, FilePlus2 } from 'lucide-react';
 
 interface AIAnalysisProcessingProps {
   status: 'loading' | 'success' | 'error';
@@ -14,28 +14,79 @@ export function AIAnalysisProcessing({ status, errorMessage, onComplete, onRetry
   // completes to 100% once the backend actually confirms success.
   const [progress, setProgress] = useState(10);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [displayIdx, setDisplayIdx] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+  const [waitSeconds, setWaitSeconds] = useState(10);
+  const reachedNinetyAt = useRef<number | null>(null);
 
   const steps = [
-    { label: 'Image Preprocessing', desc: 'Contrast normalization & panel isolation' },
-    { label: 'Optical Character Recognition', desc: 'Deep multilingual OCR extraction' },
-    { label: 'Layout & Geometry Detection', desc: 'Principal display panel bounds calculation' },
-    { label: 'Semantic Declaration Extraction', desc: 'MRP, Net Quantity, Batch, Mfg Date parsing' },
-    { label: 'Deterministic Rule Verification', desc: 'Legal Metrology PCR-2011 standard checks' }
+    {
+      label: 'Image Preprocessing',
+      desc: 'Contrast normalization & panel isolation',
+      tag: 'RUNNING OCR VISION',
+      icon: FileSearch,
+      iconClass: 'bg-slate-800 text-white',
+    },
+    {
+      label: 'Optical Character Recognition',
+      desc: 'Deep multilingual OCR extraction',
+      tag: 'EXTRACTING PACKAGING',
+      icon: FileText,
+      iconClass: 'bg-amber-500 text-white',
+    },
+    {
+      label: 'Layout & Geometry Detection',
+      desc: 'Principal display panel bounds calculation',
+      tag: 'METROLOGY RULES',
+      icon: Scale,
+      iconClass: 'bg-amber-400 text-white',
+    },
+    {
+      label: 'Semantic Declaration Extraction',
+      desc: 'MRP, Net Quantity, Batch, Mfg Date parsing',
+      tag: 'RUNNING MODELS',
+      icon: FilePlus2,
+      iconClass: 'bg-blue-600 text-white',
+    },
+    {
+      label: 'Deterministic Rule Verification',
+      desc: 'Legal Metrology PCR-2011 standard checks',
+      tag: 'FINALIZING',
+      icon: ShieldCheck,
+      iconClass: 'bg-emerald-500 text-white',
+    },
   ];
 
+  // Drive progress + step index while waiting on the real API call.
+  // Each of the 5 steps gets an equal ~18%-wide band of the 10-90 range.
   useEffect(() => {
     if (status !== 'loading') return;
     const timer = setInterval(() => {
       setProgress((prev) => {
         const next = Math.min(prev + 7, 90);
-        if (next > 25 && next <= 50) setCurrentStepIndex(1);
-        else if (next > 50 && next <= 70) setCurrentStepIndex(2);
-        else if (next > 70) setCurrentStepIndex(3);
+        if (next > 26 && next <= 42) setCurrentStepIndex(1);
+        else if (next > 42 && next <= 58) setCurrentStepIndex(2);
+        else if (next > 58 && next <= 74) setCurrentStepIndex(3);
+        else if (next > 74) setCurrentStepIndex(4);
         return next;
       });
     }, 450);
     return () => clearInterval(timer);
   }, [status]);
+
+  // Once we hit 90%, we're waiting on the backend, which can take up to ~10s.
+  // Count down a real timer instead of deriving a (wrong) ETA from progress%.
+  useEffect(() => {
+    if (status !== 'loading' || progress < 90) return;
+    if (reachedNinetyAt.current === null) {
+      reachedNinetyAt.current = Date.now();
+      setWaitSeconds(10);
+    }
+    const countdown = setInterval(() => {
+      setWaitSeconds((prev) => (prev > 1 ? prev - 1 : 1));
+    }, 1000);
+    return () => clearInterval(countdown);
+  }, [status, progress]);
 
   useEffect(() => {
     if (status === 'success') {
@@ -45,6 +96,26 @@ export function AIAnalysisProcessing({ status, errorMessage, onComplete, onRetry
       return () => clearTimeout(t);
     }
   }, [status, onComplete]);
+
+  // Slide the old step out, then swap content and slide the new one in.
+  useEffect(() => {
+    if (currentStepIndex === displayIdx) return;
+    setIsExiting(true);
+    const t = setTimeout(() => {
+      setDisplayIdx(currentStepIndex);
+      setIsExiting(false);
+    }, 280);
+    return () => clearTimeout(t);
+  }, [currentStepIndex, displayIdx]);
+
+  const activeIdx = Math.min(displayIdx, steps.length - 1);
+  const active = steps[activeIdx];
+  const ActiveIcon = active.icon;
+
+  const etaLabel =
+    progress >= 90 && status === 'loading'
+      ? `Estimated time remaining: up to ${waitSeconds} second(s)`
+      : `Estimated time remaining: ${Math.max(2, Math.ceil((90 - progress) / 7) * 2)} second(s)`;
 
   if (status === 'error') {
     return (
@@ -134,80 +205,57 @@ export function AIAnalysisProcessing({ status, errorMessage, onComplete, onRetry
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             AI Analysis in Progress
           </h1>
-          <p className="text-sm text-slate-500 max-w-lg mx-auto">
-            Analyzing package images, isolating principal display panel, extracting declarations, and preparing deterministic rule verifications...
-          </p>
         </div>
 
-        {/* Circular Progress Display */}
-        <div className="relative flex items-center justify-center py-2">
-          <svg className="w-48 h-48 -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#F1F5F9" strokeWidth="10" />
-            <circle
-              cx="60"
-              cy="60"
-              r="50"
-              fill="none"
-              stroke="#2563EB"
-              strokeWidth="10"
-              strokeDasharray="314.15"
-              strokeDashoffset={314.15 * (1 - progress / 100)}
-              strokeLinecap="round"
-              className="transition-all duration-300 ease-out"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-black text-slate-900">{progress}%</span>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-              {progress === 100 ? 'Verified' : 'Processing'}
-            </span>
+        {/* Single-Step Animated Display: 2-line step description above the icon, both slide together */}
+        <div className="relative flex flex-col items-center justify-center py-8 overflow-hidden">
+          <div
+            className="absolute w-64 h-64 rounded-full animate-glow-pulse pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(251,191,36,0.16) 0%, rgba(251,191,36,0.05) 45%, transparent 70%)',
+            }}
+          />
+          <div
+            key={activeIdx}
+            className={`relative flex flex-col items-center ${isExiting ? 'animate-slide-out-step' : 'animate-slide-in-step'}`}
+          >
+            <div className="max-w-md space-y-1 mb-6">
+              <p className="text-base font-bold text-slate-900">{active.label}</p>
+              <p className="text-sm text-slate-500">{active.desc}</p>
+            </div>
+
+            <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${active.iconClass}`}>
+              <ActiveIcon className="w-7 h-7" />
+            </div>
+
+            <div className="relative mt-6 text-xs font-bold tracking-[0.2em] text-slate-500 uppercase">
+              {active.tag}
+            </div>
+
+            <div className="relative mt-4 w-56 h-[3px] rounded-full bg-slate-200 overflow-hidden">
+              <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-shimmer-slide" />
+            </div>
           </div>
         </div>
 
-        {/* Step Breakdown */}
-        <div className="max-w-md mx-auto space-y-3 text-left">
-          {steps.map((step, idx) => {
-            const isDone = currentStepIndex > idx || progress === 100;
-            const isCurrent = currentStepIndex === idx && progress < 100;
-
-            return (
-              <div
-                key={step.label}
-                className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isDone
-                  ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
-                  : isCurrent
-                    ? 'bg-blue-50/80 border-blue-300 text-blue-950 shadow-xs ring-2 ring-blue-500/10'
-                    : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
-                  }`}
-              >
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isDone
-                    ? 'bg-emerald-500 text-white'
-                    : isCurrent
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-200 text-slate-500'
-                    }`}
-                >
-                  {isDone ? (
-                    <CheckCircle2 className="w-4 h-4" />
-                  ) : isCurrent ? (
-                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                  ) : (
-                    <span className="text-xs font-bold">{idx + 1}</span>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold truncate">{step.label}</div>
-                  <div className="text-[11px] text-slate-500 truncate">{step.desc}</div>
-                </div>
-              </div>
-            );
-          })}
+        {/* Compact step dots - shows overall sequence position */}
+        <div className="flex items-center justify-center gap-2 pt-1">
+          {steps.map((step, idx) => (
+            <span
+              key={step.label}
+              className={`h-1.5 rounded-full transition-all duration-300 ${idx === activeIdx
+                ? 'w-6 bg-blue-600 animate-dot-grow'
+                : idx < currentStepIndex
+                  ? 'w-1.5 bg-emerald-400'
+                  : 'w-1.5 bg-slate-200'
+                }`}
+            />
+          ))}
         </div>
 
         <div className="text-xs text-slate-400 font-medium pt-2">
-          Estimated time remaining: {Math.max(1, Math.ceil((100 - progress) / 35))} second(s)
+          {progress}% - {etaLabel}
         </div>
       </div>
     </div>

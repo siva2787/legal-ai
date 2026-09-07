@@ -249,8 +249,12 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-slate-50 transition-colors text-left"
           >
-            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold flex items-center justify-center text-sm border border-blue-200">
-              {user.name.split(' ').map((n) => n[0]).join('')}
+            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold flex items-center justify-center text-sm border border-blue-200 overflow-hidden shrink-0">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{user.name.split(' ').map((n) => n[0]).join('')}</span>
+              )}
             </div>
             <div className="hidden sm:block">
               <div className="text-sm font-semibold text-slate-900 leading-tight">
@@ -266,10 +270,19 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
           {/* Profile Menu Dropdown */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 z-50 text-sm">
-              <div className="px-3.5 py-2 border-b border-slate-100">
-                <div className="font-semibold text-slate-900">{user.name}</div>
-                <div className="text-xs text-slate-500 truncate">{user.email}</div>
-                <div className="text-[11px] text-blue-600 font-medium mt-0.5">ID: {user.employee_id}</div>
+              <div className="px-3.5 py-2 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold flex items-center justify-center text-sm border border-blue-200 overflow-hidden shrink-0">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user.name.split(' ').map((n) => n[0]).join('')}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-900 truncate">{user.name}</div>
+                  <div className="text-xs text-slate-500 truncate">{user.email}</div>
+                  <div className="text-[11px] text-blue-600 font-medium mt-0.5">ID: {user.employee_id}</div>
+                </div>
               </div>
 
               <button
