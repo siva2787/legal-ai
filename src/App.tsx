@@ -29,12 +29,17 @@ export default function App() {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
 
   // Inspector User Profile
-  const [currentUser, setCurrentUser] = useState<UserProfile>({
-    name: 'Rohinth Kumaran',
-    role: 'Legal Metrology Inspector',
-    employee_id: 'LM-10334',
-    email: 'rohinth.k@lm.gov.in',
-    zone: 'Kumbakonam & Thanjavur District, Tamil Nadu'
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    const employeeId = 'LM-10334';
+    const storedAvatar = localStorage.getItem(`legalmet_avatar_${employeeId}`);
+    return {
+      name: 'Rohinth Kumaran',
+      role: 'Legal Metrology Inspector',
+      employee_id: employeeId,
+      email: 'rohinth.k@lm.gov.in',
+      zone: 'Kumbakonam & Thanjavur District, Tamil Nadu',
+      avatar_url: storedAvatar || undefined
+    };
   });
 
   // Inspections Registry - dynamic from SQLite
