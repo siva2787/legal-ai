@@ -12,6 +12,9 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { PackageImage } from '../../types';
+import sampleFrontView from '../../assets/sample-dark-fantasy-front.jpg';
+import sampleBackView from '../../assets/sample-dark-fantasy-back.jpg';
+import sampleSideView from '../../assets/sample-dark-fantasy-side.jpg';
 
 interface NewInspectionUploadProps {
   onStartAnalysis: (payload: {
@@ -161,6 +164,21 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
   const [images, setImages] = useState<PackageImage[]>([]);
   const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
   const [cameraSlot, setCameraSlot] = useState<PackageImage['view_type'] | null>(null);
+  const [loadingSample, setLoadingSample] = useState(false);
+
+  const urlToDataUrl = (url: string): Promise<{ dataUrl: string; size: number }> => {
+    return fetch(url)
+      .then((res) => res.blob())
+      .then(
+        (blob) =>
+          new Promise<{ dataUrl: string; size: number }>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve({ dataUrl: reader.result as string, size: blob.size });
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          })
+      );
+  };
 
   const addImage = (dataUrl: string, viewType: PackageImage['view_type'], fileName: string, fileSize: number) => {
     const newImg: PackageImage = {
@@ -301,35 +319,48 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              setImages([
-                {
-                  id: 'img-front',
-                  view_type: 'Front View',
-                  data_url: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop&q=80',
-                  file_name: 'potato_chips_front.jpg',
-                  file_size: 1420000
-                },
-                {
-                  id: 'img-back',
-                  view_type: 'Back View',
-                  data_url: 'https://images.unsplash.com/photo-1527842891421-42eec6e703ea?w=600&auto=format&fit=crop&q=80',
-                  file_name: 'potato_chips_back.jpg',
-                  file_size: 1180000
-                },
-                {
-                  id: 'img-side',
-                  view_type: 'Side View',
-                  data_url: 'https://images.unsplash.com/photo-1621447504864-d8686e12698c?w=600&auto=format&fit=crop&q=80',
-                  file_name: 'potato_chips_side.jpg',
-                  file_size: 920000
-                }
-              ]);
+            disabled={loadingSample}
+            onClick={async () => {
+              setLoadingSample(true);
+              try {
+                const [front, back, side] = await Promise.all([
+                  urlToDataUrl(sampleFrontView),
+                  urlToDataUrl(sampleBackView),
+                  urlToDataUrl(sampleSideView)
+                ]);
+                setImages([
+                  {
+                    id: 'img-front',
+                    view_type: 'Front View',
+                    data_url: front.dataUrl,
+                    file_name: 'dark_fantasy_front.jpg',
+                    file_size: front.size
+                  },
+                  {
+                    id: 'img-back',
+                    view_type: 'Back View',
+                    data_url: back.dataUrl,
+                    file_name: 'dark_fantasy_back.jpg',
+                    file_size: back.size
+                  },
+                  {
+                    id: 'img-side',
+                    view_type: 'Side View',
+                    data_url: side.dataUrl,
+                    file_name: 'dark_fantasy_side.jpg',
+                    file_size: side.size
+                  }
+                ]);
+              } catch (err) {
+                console.warn('Failed to load sample package images:', err);
+              } finally {
+                setLoadingSample(false);
+              }
             }}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Reset to Sample Package
+            {loadingSample ? 'Loading Sample...' : 'Reset to Sample Package'}
           </button>
         </div>
       </div>

@@ -62,7 +62,7 @@ export function Sidebar({
   return (
     <aside
       id="sidebar-container"
-      className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen select-none shrink-0 sticky top-0 z-30"
+      className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen select-none shrink-0 sticky top-0 z-30 overflow-x-hidden"
     >
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-100 flex items-center gap-3">
@@ -95,11 +95,10 @@ export function Sidebar({
               key={item.id}
               id={`nav-item-${item.id}`}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                isActive
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${isActive
                   ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
@@ -107,11 +106,10 @@ export function Sidebar({
               </div>
               {item.badge && item.badge > 0 && (
                 <span
-                  className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
-                    isActive
+                  className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${isActive
                       ? 'bg-white text-blue-600'
                       : 'bg-red-500 text-white'
-                  }`}
+                    }`}
                 >
                   {item.badge}
                 </span>
@@ -121,27 +119,28 @@ export function Sidebar({
         })}
       </div>
 
-      {/* Tricolor Patriotic Badge Banner */}
-      <div className="mx-3 my-2 p-3 bg-gradient-to-br from-orange-50/70 via-white to-emerald-50/70 rounded-xl border border-slate-200/80 text-center relative overflow-hidden shadow-xs">
+      {/* Stronger Markets, Brighter Bharat — Official Banner */}
+      <div className="mx-3 mb-3 rounded-xl border border-slate-200/80 shadow-xs bg-gradient-to-br from-orange-50/60 via-white to-emerald-50/60 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF9933] via-white to-[#138808]"></div>
-        <div className="text-[13px] font-bold text-slate-800 tracking-tight leading-snug pt-1">
-          Stronger Markets <br />
-          <span className="text-blue-700">Brighter Bharat</span>
-        </div>
-      </div>
+        <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full border-4 border-blue-900/5"></div>
 
-      {/* Official Government Footer */}
-      <div className="p-3.5 border-t border-slate-100 bg-slate-50/60">
-        <div className="flex items-center gap-2.5 mb-2.5">
+        <div className="p-3.5 text-center">
+          <div className="text-[13px] font-bold text-slate-800 tracking-tight leading-snug">
+            Stronger Markets <br />
+            <span className="text-blue-700">Brighter Bharat</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 px-3.5 pb-3">
           <AshokaEmblem className="w-6 h-8 shrink-0" />
-          <div className="text-[10px] text-slate-600 leading-tight">
+          <div className="text-[10px] text-slate-600 leading-tight text-left">
             <span className="font-semibold text-slate-800 block">Ministry of Consumer Affairs,</span>
             Food & Public Distribution
             <div className="text-[9px] text-slate-500 font-medium">Government of India</div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-[11px] text-slate-500">
+        <div className="flex items-center justify-between px-3.5 py-2 border-t border-slate-200/60 text-[11px] text-slate-500 bg-white/60">
           <span className="font-medium text-slate-600">v1.0.0</span>
           <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

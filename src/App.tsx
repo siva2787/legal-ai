@@ -244,7 +244,7 @@ export default function App() {
 
   // Authenticated Inspector Shell
   return (
-    <div className="flex h-screen bg-[#F4F7FB] overflow-hidden antialiased">
+    <div className="flex h-screen bg-[#F4F7FB] overflow-hidden antialiased max-w-full">
       {/* Persistent Left Inspector Sidebar */}
       <Sidebar
         currentView={currentView}
@@ -257,11 +257,13 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
         {/* Global Inspector Header */}
         <Header
           user={currentUser}
+          inspections={inspections}
           onNavigate={(view) => setCurrentView(view)}
+          onViewReport={handleViewReport}
           onLogout={() => {
             setIsAuthenticated(false);
             setCurrentView('login' as any);

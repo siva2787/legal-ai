@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  Download, Printer, AlertTriangle, ShieldCheck, ArrowLeft, Loader2,
+  Download, Printer, AlertTriangle, ShieldCheck, ChevronLeft, Loader2,
   CheckCircle2, XCircle, AlertCircle, MinusCircle, ListChecks, BookOpenCheck, PenLine
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
@@ -592,8 +592,8 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
       <style>{PRINT_FIX_STYLES}</style>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <button onClick={onBackToResults} className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1">
-          <ArrowLeft className="w-3.5 h-3.5" />
+        <button onClick={onBackToResults} className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all text-xs w-fit">
+          <ChevronLeft className="w-4 h-4" />
           <span>Back to Results</span>
         </button>
 

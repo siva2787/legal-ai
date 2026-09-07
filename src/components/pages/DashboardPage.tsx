@@ -79,6 +79,71 @@ export function DashboardPage({
       }))
       : []);
 
+  // Compliance Overview period filter
+  const PERIOD_OPTIONS: { value: '7' | '30' | '90' | 'all'; label: string }[] = [
+    { value: '7', label: 'Last 7 Days' },
+    { value: '30', label: 'Last 30 Days' },
+    { value: '90', label: 'Last 90 Days' },
+    { value: 'all', label: 'All Time' },
+  ];
+  const [compliancePeriod, setCompliancePeriod] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+
+  const periodFilteredInspections = React.useMemo(() => {
+    if (compliancePeriod === 'all') return inspections;
+    const days = parseInt(compliancePeriod, 10);
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return inspections.filter((i) => {
+      const t = new Date(i.created_at as any).getTime();
+      return !isNaN(t) && t >= cutoff;
+    });
+  }, [inspections, compliancePeriod]);
+
+  const usingDefaultPeriod = compliancePeriod === '30';
+  const periodTotal = usingDefaultPeriod ? totalInspections : periodFilteredInspections.length;
+  const periodCompliant = usingDefaultPeriod
+    ? compliantCount
+    : periodFilteredInspections.filter((i) => i.compliance_summary?.overall_status === 'COMPLIANT').length;
+  const periodNonCompliant = usingDefaultPeriod
+    ? nonCompliantCount
+    : periodFilteredInspections.filter((i) => i.compliance_summary?.overall_status === 'NON-COMPLIANT').length;
+  const periodReview = usingDefaultPeriod
+    ? reviewCount
+    : periodFilteredInspections.filter((i) => i.compliance_summary?.overall_status === 'REVIEW_REQUIRED').length;
+  const periodRate = usingDefaultPeriod
+    ? complianceRate
+    : (periodTotal > 0 ? Math.round((periodCompliant / periodTotal) * 100) : 0);
+  const periodLabel = PERIOD_OPTIONS.find((o) => o.value === compliancePeriod)?.label ?? 'Last 30 Days';
+
+  // Product Categories catalog filter
+  const CATALOG_OPTIONS: { value: 'active' | 'all'; label: string }[] = [
+    { value: 'active', label: 'Active Catalog' },
+    { value: 'all', label: 'All Products' },
+  ];
+  const [catalogFilter, setCatalogFilter] = useState<'active' | 'all'>('active');
+  const [catalogMenuOpen, setCatalogMenuOpen] = useState(false);
+
+  const allTimeCategoriesList = React.useMemo(() => {
+    const map = new Map<string, number>();
+    inspections.forEach((i: any) => {
+      const cat = i.product_context?.category || i.product_context?.product_name || 'Uncategorized';
+      map.set(cat, (map.get(cat) || 0) + 1);
+    });
+    const total = inspections.length || 1;
+    const palette = ['bg-blue-600', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-500', 'bg-rose-500', 'bg-cyan-500'];
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, count], idx) => ({
+        category,
+        count,
+        percentage: Math.round((count / total) * 100),
+        color: palette[idx % palette.length],
+      }));
+  }, [inspections]);
+
+  const displayedCategoriesList = catalogFilter === 'active' ? categoriesList : allTimeCategoriesList;
+  const catalogLabel = CATALOG_OPTIONS.find((o) => o.value === catalogFilter)?.label ?? 'Active Catalog';
+
   const todayWeekday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   const todayDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -154,64 +219,97 @@ export function DashboardPage({
       </div>
 
       {/* 4 Metric Cards */}
+      <style>{`
+        @keyframes dashCardIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes dashSparkDraw {
+          from { stroke-dashoffset: 140; }
+          to { stroke-dashoffset: 0; }
+        }
+        .dash-metric-card {
+          animation: dashCardIn 0.45s ease-out both;
+        }
+        .dash-metric-card .dash-spark {
+          stroke-dasharray: 140;
+          stroke-dashoffset: 140;
+          animation: dashSparkDraw 1.1s 0.3s ease-out forwards;
+        }
+        .dash-metric-card:hover .dash-spark {
+          animation: dashSparkDraw 0.8s ease-out forwards;
+        }
+      `}</style>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Metric 1 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div
+          className="dash-metric-card group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-blue-200 cursor-default"
+          style={{ animationDelay: '0ms' }}
+        >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <FileText className="w-5 h-5" />
             </div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight">{totalInspections}</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight transition-colors duration-300 group-hover:text-blue-600">{totalInspections}</div>
             <div className="text-xs font-medium text-slate-500 mt-0.5">Total Inspections</div>
           </div>
           {/* Mini SVG Sparkline */}
           <svg className="w-20 h-10 text-blue-500 stroke-current fill-none stroke-2" viewBox="0 0 100 40">
-            <path d="M0 35 Q 25 30, 50 15 T 100 5" />
+            <path className="dash-spark" d="M0 35 Q 25 30, 50 15 T 100 5" />
           </svg>
         </div>
 
         {/* Metric 2 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div
+          className="dash-metric-card group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-emerald-200 cursor-default"
+          style={{ animationDelay: '60ms' }}
+        >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight">{compliantCount}</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight transition-colors duration-300 group-hover:text-emerald-600">{compliantCount}</div>
             <div className="text-xs font-medium text-slate-500 mt-0.5">Compliant Products</div>
           </div>
           <svg className="w-20 h-10 text-emerald-500 stroke-current fill-none stroke-2" viewBox="0 0 100 40">
-            <path d="M0 30 Q 30 25, 60 10 T 100 8" />
+            <path className="dash-spark" d="M0 30 Q 30 25, 60 10 T 100 8" />
           </svg>
         </div>
 
         {/* Metric 3 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div
+          className="dash-metric-card group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-rose-200 cursor-default"
+          style={{ animationDelay: '120ms' }}
+        >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight">{nonCompliantCount}</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight transition-colors duration-300 group-hover:text-rose-600">{nonCompliantCount}</div>
             <div className="text-xs font-medium text-slate-500 mt-0.5">Non-Compliant Products</div>
           </div>
           <svg className="w-20 h-10 text-rose-500 stroke-current fill-none stroke-2" viewBox="0 0 100 40">
-            <path d="M0 10 Q 30 15, 60 30 T 100 35" />
+            <path className="dash-spark" d="M0 10 Q 30 15, 60 30 T 100 35" />
           </svg>
         </div>
 
         {/* Metric 4 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div
+          className="dash-metric-card group bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-purple-200 cursor-default"
+          style={{ animationDelay: '180ms' }}
+        >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
               <Package className="w-5 h-5" />
             </div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight">{productsCovered}</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight transition-colors duration-300 group-hover:text-purple-600">{productsCovered}</div>
             <div className="text-xs font-medium text-slate-500 mt-0.5">Products Covered</div>
             <div className="text-[11px] font-medium text-slate-400 mt-2">
               Across {categoriesList.length} categor{categoriesList.length === 1 ? 'y' : 'ies'}
             </div>
           </div>
           <svg className="w-20 h-10 text-purple-500 stroke-current fill-none stroke-2" viewBox="0 0 100 40">
-            <path d="M0 25 Q 35 10, 70 30 T 100 12" />
+            <path className="dash-spark" d="M0 25 Q 35 10, 70 30 T 100 12" />
           </svg>
         </div>
       </div>
@@ -226,10 +324,10 @@ export function DashboardPage({
               <h2 className="text-base font-bold text-slate-900">Recent Inspections</h2>
               <button
                 onClick={onViewAllInspections}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                className="group inline-flex items-center gap-1.5 pl-3.5 pr-2.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-sm transition-colors"
               >
                 <span>View All</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="text-sm leading-none translate-y-[-1px] transition-transform group-hover:translate-x-0.5">›</span>
               </button>
             </div>
 
@@ -262,7 +360,7 @@ export function DashboardPage({
                       const isReview = status === 'REVIEW_REQUIRED';
 
                       return (
-                        <tr key={ins.id} className="hover:bg-slate-50/60 transition-colors">
+                        <tr key={ins.id} className="hover:bg-slate-50/80 transition-colors duration-200 hover:shadow-[inset_2px_0_0_0_#2563EB]">
                           <td className="py-3.5 px-4 font-semibold text-slate-900 text-xs">
                             {ins.inspection_number}
                           </td>
@@ -326,10 +424,10 @@ export function DashboardPage({
               <h2 className="text-base font-bold text-slate-900">Upcoming Tasks & Enforcement Actions</h2>
               <button
                 onClick={onViewAllTasks}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                className="group inline-flex items-center gap-1.5 pl-3.5 pr-2.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-sm transition-colors cursor-pointer"
               >
                 <span>View All Alerts</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="text-sm leading-none translate-y-[-1px] transition-transform group-hover:translate-x-0.5">›</span>
               </button>
             </div>
 
@@ -411,9 +509,38 @@ export function DashboardPage({
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-slate-900">Compliance Overview</h2>
-              <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                Last 30 Days <ChevronDown className="w-3 h-3" />
-              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPeriodMenuOpen((v) => !v)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  {periodLabel} <ChevronDown className={`w-3 h-3 transition-transform ${periodMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {periodMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setPeriodMenuOpen(false)}></div>
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-20">
+                      {PERIOD_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setCompliancePeriod(opt.value);
+                            setPeriodMenuOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold cursor-pointer ${opt.value === compliancePeriod
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Donut Chart with Center Percentage */}
@@ -430,12 +557,12 @@ export function DashboardPage({
                   stroke="#10B981"
                   strokeWidth="14"
                   strokeDasharray="301.6"
-                  strokeDashoffset={301.6 * (1 - complianceRate / 100)}
+                  strokeDashoffset={301.6 * (1 - periodRate / 100)}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-3xl font-black text-slate-900">{complianceRate}%</div>
+                <div className="text-3xl font-black text-slate-900">{periodRate}%</div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                   Compliance Rate
                 </div>
@@ -448,21 +575,21 @@ export function DashboardPage({
                 <span className="flex items-center gap-1.5 text-slate-600">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Compliant
                 </span>
-                <span className="font-bold text-slate-900">{compliantCount}</span>
+                <span className="font-bold text-slate-900">{periodCompliant}</span>
               </div>
 
               <div className="flex items-center justify-between p-2 rounded-lg bg-rose-50/70">
                 <span className="flex items-center gap-1.5 text-slate-600">
                   <span className="w-2 h-2 rounded-full bg-rose-500"></span> Non-Compliant
                 </span>
-                <span className="font-bold text-slate-900">{nonCompliantCount}</span>
+                <span className="font-bold text-slate-900">{periodNonCompliant}</span>
               </div>
 
               <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50/70">
                 <span className="flex items-center gap-1.5 text-slate-600">
                   <span className="w-2 h-2 rounded-full bg-amber-500"></span> Under Review
                 </span>
-                <span className="font-bold text-slate-900">{reviewCount}</span>
+                <span className="font-bold text-slate-900">{periodReview}</span>
               </div>
 
               <div className="flex items-center justify-between p-2 rounded-lg bg-slate-100">
@@ -470,7 +597,7 @@ export function DashboardPage({
                   <span className="w-2 h-2 rounded-full bg-slate-400"></span> Not Applicable
                 </span>
                 <span className="font-bold text-slate-900">
-                  {Math.max(0, totalInspections - compliantCount - nonCompliantCount - reviewCount)}
+                  {Math.max(0, periodTotal - periodCompliant - periodNonCompliant - periodReview)}
                 </span>
               </div>
             </div>
@@ -480,14 +607,43 @@ export function DashboardPage({
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-slate-900">Product Categories</h2>
-              <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                Active Catalog <ChevronDown className="w-3 h-3" />
-              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCatalogMenuOpen((v) => !v)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  {catalogLabel} <ChevronDown className={`w-3 h-3 transition-transform ${catalogMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {catalogMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setCatalogMenuOpen(false)}></div>
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl border border-slate-200 shadow-lg py-1 z-20">
+                      {CATALOG_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setCatalogFilter(opt.value);
+                            setCatalogMenuOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs font-semibold cursor-pointer ${opt.value === catalogFilter
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3.5 text-xs">
-              {categoriesList.length > 0 ? (
-                categoriesList.map((catItem: any, idx: number) => (
+              {displayedCategoriesList.length > 0 ? (
+                displayedCategoriesList.map((catItem: any, idx: number) => (
                   <div key={catItem.category || idx}>
                     <div className="flex justify-between font-semibold text-slate-700 mb-1">
                       <span>{catItem.category}</span>
