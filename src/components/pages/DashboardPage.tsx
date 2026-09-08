@@ -324,7 +324,7 @@ export function DashboardPage({
               <h2 className="text-base font-bold text-slate-900">Recent Inspections</h2>
               <button
                 onClick={onViewAllInspections}
-                className="group inline-flex items-center gap-1.5 pl-3.5 pr-2.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-sm transition-colors"
+                className="group inline-flex items-center gap-1.5 pl-3.5 pr-2.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-sm transition-colors cursor-pointer"
               >
                 <span>View All</span>
                 <span className="text-sm leading-none translate-y-[-1px] transition-transform group-hover:translate-x-0.5">›</span>

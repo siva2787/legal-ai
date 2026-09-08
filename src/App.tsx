@@ -383,7 +383,7 @@ export default function App() {
             />
           )}
 
-          {currentView === 'analytics' && <AnalyticsPage />}
+          {currentView === 'analytics' && <AnalyticsPage onNavigate={(view) => setCurrentView(view)} />}
 
           {currentView === 'products' && (
             <ProductsPage

@@ -95,9 +95,9 @@ export function Sidebar({
               key={item.id}
               id={`nav-item-${item.id}`}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${isActive
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer ${isActive
+                ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
             >
               <div className="flex items-center gap-3">
@@ -107,8 +107,8 @@ export function Sidebar({
               {item.badge && item.badge > 0 && (
                 <span
                   className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${isActive
-                      ? 'bg-white text-blue-600'
-                      : 'bg-red-500 text-white'
+                    ? 'bg-white text-blue-600'
+                    : 'bg-red-500 text-white'
                     }`}
                 >
                   {item.badge}

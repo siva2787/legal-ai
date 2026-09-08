@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Search,
   Scale,
-  FileText,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  ShieldCheck,
-  CheckCircle2,
   Table
 } from 'lucide-react';
 import { PCR_2011_RULES, FIRST_SCHEDULE_MPE, SECOND_SCHEDULE_COMMODITIES } from '../../legal/pcr2011Data';
@@ -17,6 +13,10 @@ export function KnowledgeBasePage() {
   const [activeTab, setActiveTab] = useState<'rules' | 'mpe' | 'quantities'>('rules');
   const [search, setSearch] = useState('');
   const [expandedRule, setExpandedRule] = useState<string | null>('LM-PC-R6');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
+  }, [activeTab]);
 
   const filteredRules = PCR_2011_RULES.filter(
     (r) =>
@@ -41,11 +41,10 @@ export function KnowledgeBasePage() {
       <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-xs flex items-center gap-2">
         <button
           onClick={() => setActiveTab('rules')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'rules'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'rules'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <BookOpen className="w-4 h-4" />
           <span>PCR-2011 Rules (1–34)</span>
@@ -53,11 +52,10 @@ export function KnowledgeBasePage() {
 
         <button
           onClick={() => setActiveTab('mpe')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'mpe'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'mpe'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <Scale className="w-4 h-4" />
           <span>First Schedule: MPE Tolerances</span>
@@ -65,11 +63,10 @@ export function KnowledgeBasePage() {
 
         <button
           onClick={() => setActiveTab('quantities')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'quantities'
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'quantities'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
-          }`}
+            }`}
         >
           <Table className="w-4 h-4" />
           <span>Second Schedule: Standard Quantities</span>
@@ -101,38 +98,47 @@ export function KnowledgeBasePage() {
                 >
                   <div
                     onClick={() => setExpandedRule(isOpen ? null : r.rule_id)}
-                    className="p-4 cursor-pointer hover:bg-slate-50/70 transition-colors flex items-center justify-between"
+                    className="grid grid-cols-[72px_1fr_260px_20px] items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/70 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                    {/* Rule number column - fixed width for perfect alignment */}
+                    <div>
+                      <span className="inline-block text-[11px] font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 whitespace-nowrap">
                         Rule {r.rule_number}
                       </span>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900">{r.title}</h3>
-                        <p className="text-xs text-slate-500">{r.summary}</p>
-                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                        {r.chapter}
+                    {/* Title/summary column */}
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-slate-900">{r.title}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">{r.summary}</p>
+                    </div>
+
+                    {/* Chapter badge column - fixed width, centered, single line always */}
+                    <div className="flex justify-center">
+                      <span className="inline-block w-full text-center text-[10px] font-bold text-white bg-slate-950 px-3 py-1.5 rounded-md whitespace-nowrap">
+                        {r.chapter.length > 40 ? 'Chapter II - Provisions Applied Retail' : r.chapter}
                       </span>
+                    </div>
+
+                    {/* Chevron column */}
+                    <div>
                       {isOpen ? (
-                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                        <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                        <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                       )}
                     </div>
                   </div>
 
                   {isOpen && (
-                    <div className="p-5 border-t border-slate-100 bg-slate-50/50 space-y-4 text-xs">
-                      <div>
-                        <div className="font-bold text-slate-700 uppercase tracking-wider text-[10px] mb-2">
+                    <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50 space-y-3 text-xs">
+                      <p className="text-slate-600 leading-relaxed">{r.summary}</p>
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200/70">
+                        <div className="font-bold text-slate-500 uppercase tracking-wide text-[10px]">
                           Source Document Reference
                         </div>
-                        <p className="text-slate-600 font-mono text-[11px]">
-                          {r.source_document} ({r.source_page}) • {r.legal_version}
+                        <p className="text-slate-500 font-mono text-[11px]">
+                          {r.source_document} ({r.source_page}) · {r.legal_version}
                         </p>
                       </div>
                     </div>
@@ -156,32 +162,32 @@ export function KnowledgeBasePage() {
                 Statutory error limits on net quantity of packaged commodities under Rule 22
               </p>
             </div>
-            <div className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-200">
+            <div className="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-200">
               Rule 22 Standard
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-slate-300">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-500 uppercase">
-                  <th className="py-3 px-4">Declared Quantity Range</th>
-                  <th className="py-3 px-4">Maximum Permissible Error</th>
-                  <th className="py-3 px-4">Schedule Reference</th>
+                <tr className="bg-slate-950 text-white font-bold uppercase tracking-wide">
+                  <th className="py-3 px-4 border border-slate-700">Declared Quantity Range</th>
+                  <th className="py-3 px-4 border border-slate-700">Maximum Permissible Error</th>
+                  <th className="py-3 px-4 border border-slate-700">Schedule Reference</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {FIRST_SCHEDULE_MPE.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-4 font-bold text-slate-900">
+                    <td className="py-3 px-4 border border-slate-200 font-bold text-slate-900">
                       {row.min_quantity} {row.unit} to {row.max_quantity} {row.unit}
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-blue-700">
+                    <td className="py-3 px-4 border border-slate-200 font-mono font-bold text-blue-700">
                       {row.error_type === 'percentage'
                         ? `${row.error_value}%`
                         : `${row.error_value} ${row.unit}`}
                     </td>
-                    <td className="py-3 px-4 text-slate-600">
+                    <td className="py-3 px-4 border border-slate-200 text-slate-600">
                       {row.schedule_reference} ({row.source_page})
                     </td>
                   </tr>
@@ -210,11 +216,13 @@ export function KnowledgeBasePage() {
                 key={comm.commodity_name}
                 className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2"
               >
-                <div className="flex items-center justify-between">
+                <div className="grid grid-cols-[1fr_180px] items-start gap-3">
                   <h3 className="font-bold text-slate-900 text-sm">{comm.commodity_name}</h3>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                    {comm.category}
-                  </span>
+                  <div className="flex justify-center">
+                    <span className="inline-block w-full text-center text-[10px] font-bold text-white bg-slate-950 px-2.5 py-1 rounded-md whitespace-nowrap">
+                      {comm.category}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-xs text-slate-600">
                   <span className="font-semibold text-slate-700">Permitted Pack Sizes:</span>{' '}

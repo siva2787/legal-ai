@@ -179,11 +179,33 @@ function pdfImageFormat(dataUrl: string): 'PNG' | 'JPEG' {
   return dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
 }
 
+// jsPDF's built-in "helvetica" font has no glyph for the Indian Rupee sign (\u20b9);
+// WinAnsi fallback renders it as a stray "1" / superscript character. Swap it for
+// plain "Rs." whenever text is headed into the PDF (the on-screen HTML preview can
+// keep the real symbol since browsers render it fine).
+function pdfSafeText(text: string): string {
+  return text.replace(/\u20b9/g, 'Rs.');
+}
+
 function statusColors(status: string): { bg: [number, number, number]; tx: [number, number, number] } {
   if (status === 'PASS') return { bg: EMERALD_BG, tx: EMERALD_TX };
   if (status === 'FAIL') return { bg: ROSE_BG, tx: ROSE_TX };
   if (status === 'NOT_APPLICABLE') return { bg: SLATE_BG, tx: SLATE_TX };
   return { bg: AMBER_BG, tx: AMBER_TX };
+}
+
+function drawSectionHeader(doc: jsPDF, num: number, title: string, x: number, yPos: number) {
+  const r = 2.3;
+  doc.setFillColor(...BLUE);
+  doc.circle(x + r, yPos - r * 0.85, r, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text(String(num), x + r, yPos - r * 0.85 + 1, { align: 'center' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...NAVY);
+  doc.text(title, x + r * 2 + 3, yPos);
 }
 
 export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults }: ReportPreviewProps) {
@@ -350,15 +372,27 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
 
       if (mainImage?.data_url) {
         try {
-          const imgW = 30;
-          const imgH = 30;
+          const boxW = 30;
+          const boxH = 30;
           doc.setDrawColor(...BORDER);
-          doc.rect(marginX, y, imgW, imgH);
-          doc.addImage(mainImage.data_url, pdfImageFormat(mainImage.data_url), marginX + 0.5, y + 0.5, imgW - 1, imgH - 1);
+          doc.setFillColor(...PANEL_BG);
+          doc.rect(marginX, y, boxW, boxH, 'FD');
+
+          // Fit the photo inside the box without distorting its aspect ratio
+          const { width: natW, height: natH } = doc.getImageProperties(mainImage.data_url);
+          const innerW = boxW - 1;
+          const innerH = boxH - 1;
+          const scale = Math.min(innerW / natW, innerH / natH);
+          const drawW = natW * scale;
+          const drawH = natH * scale;
+          const drawX = marginX + (boxW - drawW) / 2;
+          const drawY = y + (boxH - drawH) / 2;
+          doc.addImage(mainImage.data_url, pdfImageFormat(mainImage.data_url), drawX, drawY, drawW, drawH);
+
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(6.5);
           doc.setTextColor(...SLATE_400);
-          doc.text(mainImage.view_type, marginX, y + imgH + 3.5, { align: 'left' });
+          doc.text(mainImage.view_type, marginX, y + boxH + 3.5, { align: 'left' });
         } catch {
           // image failed to embed; continue without it
         }
@@ -367,17 +401,14 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
       const textX = mainImage?.data_url ? marginX + 36 : marginX;
       const textW = contentW - (mainImage?.data_url ? 36 : 0);
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('1.  PACKAGE & COMMODITY PARTICULARS', textX, y + 4);
+      drawSectionHeader(doc, 1, 'PACKAGE & COMMODITY PARTICULARS', textX, y + 4);
 
       autoTable(doc, {
         startY: y + 7,
         margin: { left: textX, right: marginX },
         tableWidth: textW,
         theme: 'grid',
-        styles: { font: 'helvetica', fontSize: 7.4, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.8 },
+        styles: { font: 'helvetica', fontSize: 7.4, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.8, valign: 'top' },
         body: [
           [
             { content: 'Product Name', styles: { fontStyle: 'bold', textColor: SLATE_600, fillColor: PANEL_BG } },
@@ -401,7 +432,13 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
             { content: 'Country of Origin', styles: { fontStyle: 'bold', textColor: SLATE_600, fillColor: PANEL_BG } },
             { content: product_context.country_of_origin || 'N/A', styles: { fontStyle: 'bold' } }
           ]
-        ]
+        ],
+        columnStyles: {
+          0: { cellWidth: textW * 0.2 },
+          1: { cellWidth: textW * 0.3 },
+          2: { cellWidth: textW * 0.2 },
+          3: { cellWidth: textW * 0.3 }
+        }
       });
       // @ts-ignore
       const packagingTableEnd = doc.lastAutoTable.finalY;
@@ -412,10 +449,7 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
         y = 16;
       }
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('2.  OVERALL COMPLIANCE STATUS', marginX, y);
+      drawSectionHeader(doc, 2, 'OVERALL COMPLIANCE STATUS', marginX, y);
       y += 3;
 
       const bannerH = 15;
@@ -423,54 +457,106 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
       const bannerText = isCompliant ? EMERALD_TX : ROSE_TX;
       doc.setFillColor(...bannerColor);
       doc.roundedRect(marginX, y, contentW, bannerH, 2, 2, 'F');
+      doc.setFillColor(...bannerText);
+      doc.circle(marginX + 8, y + 7.5, 4.2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text(isCompliant ? '\u2713' : '!', marginX + 8, y + 9, { align: 'center' });
       doc.setTextColor(...bannerText);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.text(compliance_summary?.overall_status.replace('_', ' ') || 'N/A', marginX + 5, y + 7);
+      doc.text(compliance_summary?.overall_status.replace('_', ' ') || 'N/A', marginX + 16, y + 7);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.text(
-        `Passed ${compliance_summary?.rules_passed ?? 0}  \u2022  Failed ${compliance_summary?.rules_failed ?? 0}  \u2022  Review ${compliance_summary?.needs_review ?? 0}  \u2022  N/A ${compliance_summary?.not_applicable ?? 0}`,
-        marginX + 5,
+        isCompliant
+          ? 'This product complies with the applicable provisions of the Legal Metrology (Packaged Commodities) Rules, 2011.'
+          : 'This product does not fully comply with the applicable provisions of the Legal Metrology (Packaged Commodities) Rules, 2011.',
+        marginX + 16,
         y + 12
       );
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.text(`${compliance_summary?.compliance_percentage ?? 0}%`, pageW - marginX - 5, y + 9.5, { align: 'right' });
-      y += bannerH + 7;
+      y += bannerH + 5;
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('3.  KEY DECLARATIONS EXTRACTED', marginX, y);
+      const kpis: { label: string; value: number; bg: [number, number, number]; tx: [number, number, number]; glyph: string }[] = [
+        { label: 'Rules Passed', value: compliance_summary?.rules_passed ?? 0, bg: EMERALD_BG, tx: EMERALD_TX, glyph: '\u2713' },
+        { label: 'Rules Failed', value: compliance_summary?.rules_failed ?? 0, bg: ROSE_BG, tx: ROSE_TX, glyph: 'x' },
+        { label: 'Needs Review', value: compliance_summary?.needs_review ?? 0, bg: AMBER_BG, tx: AMBER_TX, glyph: '!' },
+        { label: 'Not Applicable', value: compliance_summary?.not_applicable ?? 0, bg: SLATE_BG, tx: SLATE_TX, glyph: '-' }
+      ];
+      const kpiGap = 3;
+      const kpiW = (contentW - kpiGap * 3) / 4;
+      const kpiH = 13;
+      kpis.forEach((k, i) => {
+        const kx = marginX + i * (kpiW + kpiGap);
+        doc.setFillColor(...k.bg);
+        doc.roundedRect(kx, y, kpiW, kpiH, 1.5, 1.5, 'F');
+        doc.setTextColor(...k.tx);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(String(k.value), kx + kpiW / 2, y + 6.5, { align: 'center' });
+        doc.setFontSize(5.6);
+        doc.text(k.label.toUpperCase(), kx + kpiW / 2, y + 10.5, { align: 'center' });
+      });
+      y += kpiH + 7;
+
+      drawSectionHeader(doc, 3, 'KEY DECLARATIONS EXTRACTED', marginX, y);
       y += 3;
 
+      const declTableW = contentW / 2 - 2;
       autoTable(doc, {
         startY: y,
         margin: { left: marginX, right: pageW / 2 + 2 },
-        tableWidth: contentW / 2 - 2,
+        tableWidth: declTableW,
         theme: 'grid',
-        styles: { font: 'helvetica', fontSize: 6.8, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.6 },
+        styles: { font: 'helvetica', fontSize: 6.8, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.6, valign: 'top' },
         headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.8 },
         head: [['Declaration', 'Value', 'Conf.']],
-        body: declarationRows.map((d) => [d.label, d.value, d.confidencePct != null ? `${d.confidencePct}%` : '\u2014'])
+        body: declarationRows.map((d) => [
+          pdfSafeText(d.label),
+          pdfSafeText(d.value),
+          d.confidencePct != null ? `${d.confidencePct}%` : '\u2014'
+        ]),
+        columnStyles: {
+          0: { cellWidth: declTableW * 0.32 },
+          1: { cellWidth: declTableW * 0.5 },
+          2: { cellWidth: declTableW * 0.18, halign: 'right' }
+        }
       });
       // @ts-ignore
       const declTableEnd = doc.lastAutoTable.finalY;
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('4.  RULE-WISE SUMMARY', pageW / 2 + 2, y - 3);
+      drawSectionHeader(doc, 4, 'RULE-WISE SUMMARY', pageW / 2 + 2, y - 3);
 
+      const ruleTableW = contentW / 2 - 2;
+      const ruleLabelW = ruleTableW * 0.4;
+      const ruleNumW = (ruleTableW - ruleLabelW) / 5;
       autoTable(doc, {
         startY: y,
         margin: { left: pageW / 2 + 2, right: marginX },
-        tableWidth: contentW / 2 - 2,
+        tableWidth: ruleTableW,
         theme: 'grid',
-        styles: { font: 'helvetica', fontSize: 6.6, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.5, halign: 'center' },
+        styles: { font: 'helvetica', fontSize: 6.6, textColor: NAVY, lineColor: BORDER, lineWidth: 0.2, cellPadding: 1.5, halign: 'center', valign: 'middle' },
         headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.6 },
         head: [['Category', 'App.', 'P', 'F', 'R', 'N/A']],
+        didParseCell: (data) => {
+          if (data.section === 'head') {
+            const headColors: Record<number, { bg: [number, number, number]; tx: [number, number, number] }> = {
+              2: { bg: EMERALD_TX, tx: [255, 255, 255] },
+              3: { bg: ROSE_TX, tx: [255, 255, 255] },
+              4: { bg: AMBER_TX, tx: [255, 255, 255] },
+              5: { bg: SLATE_600, tx: [255, 255, 255] }
+            };
+            const c = headColors[data.column.index];
+            if (c) {
+              data.cell.styles.fillColor = c.bg;
+              data.cell.styles.textColor = c.tx;
+            }
+          }
+        },
         body: [
           ...ruleCategoryRows.map((c) => [c.label, String(c.applicable), String(c.passed), String(c.failed), String(c.review), String(c.na)]),
           [
@@ -482,7 +568,14 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
             { content: String(categoryTotals.na), styles: { fontStyle: 'bold' } }
           ]
         ],
-        columnStyles: { 0: { halign: 'left', cellWidth: (contentW / 2 - 2) * 0.44 } }
+        columnStyles: {
+          0: { halign: 'left', cellWidth: ruleLabelW },
+          1: { cellWidth: ruleNumW },
+          2: { cellWidth: ruleNumW },
+          3: { cellWidth: ruleNumW },
+          4: { cellWidth: ruleNumW },
+          5: { cellWidth: ruleNumW }
+        }
       });
       // @ts-ignore
       const ruleTableEnd = doc.lastAutoTable.finalY;
@@ -494,10 +587,7 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
       }
 
       const halfW = contentW / 2 - 3;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('5.  KEY FINDINGS', marginX, y);
+      drawSectionHeader(doc, 5, 'KEY FINDINGS', marginX, y);
       let fy = y + 5;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
@@ -511,10 +601,7 @@ export function ReportPreview({ inspection, onReturnToDashboard, onBackToResults
       });
 
       const legalX = marginX + halfW + 6;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(...NAVY);
-      doc.text('6.  LEGAL REFERENCE', legalX, y);
+      drawSectionHeader(doc, 6, 'LEGAL REFERENCE', legalX, y);
       let ly = y + 5;
       const legalRows: [string, string][] = [
         ['Source Document', primaryStandard?.name || rule_results[0]?.source_document || 'N/A'],

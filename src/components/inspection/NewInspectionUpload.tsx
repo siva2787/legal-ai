@@ -357,7 +357,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
                 setLoadingSample(false);
               }
             }}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/20 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-3.5 h-3.5" />
             {loadingSample ? 'Loading Sample...' : 'Reset to Sample Package'}
@@ -419,7 +419,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
               <select
                 value={marketType}
                 onChange={(e) => setMarketType(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
               >
                 <option value="Retail Store">Retail Store</option>
                 <option value="Wholesale Market">Wholesale Market</option>
@@ -435,7 +435,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
               <select
                 value={categoryHint}
                 onChange={(e) => setCategoryHint(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
               >
                 <option value="Packaged Snacks">Packaged Snacks</option>
                 <option value="Food & Beverages">Food & Beverages</option>
@@ -457,7 +457,7 @@ export function NewInspectionUpload({ onStartAnalysis }: NewInspectionUploadProp
             id="proceed-to-ai-analysis-btn"
             onClick={handleProceed}
             disabled={images.length === 0}
-            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 text-sm mt-auto"
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-auto"
           >
             <Sparkles className="w-4 h-4" />
             <span>Analyze with AI Engine</span>

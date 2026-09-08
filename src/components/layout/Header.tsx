@@ -150,7 +150,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                   type="button"
                   aria-label="Clear search"
                   onClick={() => { setSearchQuery(''); setShowSearch(false); }}
-                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-md"
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-md cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -161,7 +161,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
               type="button"
               id="search-submit-btn"
               onClick={() => results[activeIndex] && selectResult(results[activeIndex])}
-              className="shrink-0 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg border border-blue-200 transition-colors"
+              className="shrink-0 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg border border-blue-200 transition-colors cursor-pointer"
             >
               Search
             </button>
@@ -186,7 +186,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                         type="button"
                         onMouseEnter={() => setActiveIndex(idx)}
                         onClick={() => selectResult(item)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left ${idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left cursor-pointer ${idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
                       >
                         <Icon className={`w-4 h-4 shrink-0 ${idx === activeIndex ? 'text-blue-600' : ((item as any).statusColor || 'text-slate-400')}`} />
                         <div className="min-w-0">
@@ -203,7 +203,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                     type="button"
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => selectResult(item)}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left ${idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-left cursor-pointer ${idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${idx === activeIndex ? 'text-blue-600' : ((item as any).statusColor || 'text-slate-400')}`} />
                     <div className="min-w-0">
@@ -229,7 +229,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
           id="header-notification-btn"
           onClick={() => onNavigate('alerts')}
           aria-label="Notifications"
-          className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+          className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
         >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
@@ -247,7 +247,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
           <button
             id="profile-dropdown-btn"
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-slate-50 transition-colors text-left"
+            className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-slate-50 transition-colors text-left cursor-pointer"
           >
             <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold flex items-center justify-center text-sm border border-blue-200 overflow-hidden shrink-0">
               {user.avatar_url ? (
@@ -291,7 +291,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                   setShowProfileMenu(false);
                   onNavigate('settings');
                 }}
-                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer"
               >
                 <User className="w-4 h-4 text-slate-400" />
                 <span>Inspector Profile</span>
@@ -303,7 +303,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                   setShowProfileMenu(false);
                   onNavigate('settings');
                 }}
-                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                className="w-full px-3.5 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 cursor-pointer"
               >
                 <Settings className="w-4 h-4 text-slate-400" />
                 <span>Settings & Preferences</span>
@@ -317,7 +317,7 @@ export function Header({ user, inspections = [], onNavigate, onViewReport, onLog
                   setShowProfileMenu(false);
                   onLogout();
                 }}
-                className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5"
+                className="w-full px-3.5 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2.5 cursor-pointer"
               >
                 <LogOut className="w-4 h-4 text-red-500" />
                 <span>Sign Out</span>
